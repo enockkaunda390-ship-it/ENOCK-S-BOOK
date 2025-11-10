@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn With Enock - Video Template</title>
+<style>
+body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:0; background:#f5f7fa; }
+.container { max-width:500px; margin:20px auto; background:white; padding:20px; border-radius:12px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
+input[type="text"], input[type="email"], input[type="password"] { width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; }
+button { padding:12px 20px; border:none; background:#1976d2; color:white; border-radius:8px; cursor:pointer; margin:5px 0; font-weight:bold; transition:0.3s; }
+button:hover { background:#0288d1; transform:scale(1.03); }
+.hidden { display:none; }
+.nav-btn { display:inline-block; margin:10px 5px; padding:15px 20px; background:#1976d2; color:white; border-radius:10px; cursor:pointer; text-decoration:none; width:calc(50% - 20px); box-sizing:border-box; font-weight:bold; text-align:center; transition:0.3s; }
+.nav-btn:hover { background:#0288d1; transform:scale(1.03); }
+h2,h3 { margin-top:20px; color:#333; }
+.video-card { background:#fff; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.08); padding:10px; margin-bottom:12px; display:flex; align-items:center; gap:10px; cursor:pointer; }
+.video-card img { width:80px; height:60px; object-fit:cover; border-radius:6px; }
+.video-card p { margin:0; font-weight:bold; color:#333; }
+#videos-container { max-height:50vh; overflow-y:auto; background:#f9f9f9; border-radius:0 0 12px 12px; padding:10px; margin-top:5px; }
+.search-bar { width:calc(100% - 20px); padding:10px; margin:10px; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; }
+.back { display:inline-block; padding:10px 20px; background:#1976d2; color:white; border-radius:8px; text-decoration:none; cursor:pointer; font-weight:bold; margin:10px; }
+.back:hover { background:#0288d1; transform:scale(1.03); }
+#top-bar { position:sticky; top:0; background:#fff; z-index:15; padding:10px; border-bottom:1px solid #ccc; box-shadow:0 2px 5px rgba(0,0,0,0.05); border-radius:12px 12px 0 0; display:flex; flex-direction:column; align-items:center; }
+#video-wrapper { position:relative; width:100%; }
+#close-video { position:absolute; top:5px; right:10px; background:red; color:white; border:none; font-weight:bold; border-radius:5px; cursor:pointer; padding:2px 6px; z-index:10; }
+video { width:100%; border-radius:10px; margin-top:10px; background:black; }
+#remaining-days { font-size:0.9em; color:#555; margin-top:5px; }
+</style>
+</head>
+<body>
+
+<!-- Sign Up / Login -->
+<div class="container" id="auth-container">
+  <div id="signup-div">
+    <h2>Sign Up</h2>
+    <input type="text" id="signup-name" placeholder="Full Name"><br>
+    <input type="email" id="signup-email" placeholder="Email"><br>
+    <input type="password" id="signup-password" placeholder="Password"><br>
+    <button onclick="signUp()">Sign Up</button>
+    <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    <p id="error" style="color:red;"></p>
+  </div>
+
+  <div id="login-div" class="hidden">
+    <h2>Login</h2>
+    <input type="email" id="login-email" placeholder="Email"><br>
+    <input type="password" id="login-password" placeholder="Password"><br>
+    <button onclick="login()">Login</button>
+    <p>Don't have an account? <a href="#" onclick="showSignUp()">Sign Up</a></p>
+    <p id="error-login" style="color:red;"></p>
+  </div>
+</div>
+
+<!-- Dashboard -->
+<div class="container hidden" id="dashboard">
+  <h2 id="welcome-name"></h2>
+  <p id="remaining-days"></p>
+  <div id="subjects">
+    <a class="nav-btn" onclick="showGrades('math')">Math</a>
+    <a class="nav-btn" onclick="showGrades('chemistry')">Chemistry</a>
+    <a class="nav-btn" onclick="showGrades('biology')">Biology</a>
+    <a class="nav-btn" onclick="showGrades('physics')">Physics</a>
+    <button style="width:100%; margin-top:10px;" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+<!-- Subject Videos -->
+<div class="container hidden" id="subject-videos">
+  <h2 id="subject-title"></h2>
+  <div id="top-bar">
+    <a class="back" onclick="back()">Back</a>
+    <input type="text" id="search-input" class="search-bar" placeholder="Search videos...">
+  </div>
+
+  <!-- Video wrapper -->
+  <div id="video-wrapper">
+    <button id="close-video" class="hidden" onclick="closeVideo()">X</button>
+    <video id="selected-video" controls class="hidden"></video>
+  </div>
+
+  <div id="videos-container"></div>
+</div>
+
+<script>
+// =========================
+// ======= READY-TO-EDIT VIDEO DATA =======
+// Only add your video links here
+// Format: { title, url, thumb(optional) }
+// =========================
+const videosData = {
+  math: {
+    grade10: {
+      term1: [
+        { title:"Addition Basics", url:"https://www.w3schools.com/html/mov_bbb.mp4", thumb:"https://img.icons8.com/color/96/000000/video.png" },
+        { title:"Subtraction", url:"https://www.w3schools.com/html/movie.mp4", thumb:"https://img.icons8.com/color/96/000000/video.png" }
+      ],
+      term2: [],
+      term3: []
+    },
+    grade11: { term1:[], term2:[], term3:[] },
+    grade12: { term1:[], term2:[], term3:[] }
+  },
+  chemistry: { grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
+  biology: { grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
+  physics: { grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } }
+};
+// =====================================
+
+let currentUser=null, currentSubject=null, currentGrade=null, currentTerm=null, currentVideos=[], loadedCount=0, batchSize=10;
+
+const signupDiv=document.getElementById('signup-div');
+const loginDiv=document.getElementById('login-div');
+const authContainer=document.getElementById('auth-container');
+const dashboard=document.getElementById('dashboard');
+const welcomeName=document.getElementById('welcome-name');
+const remainingDaysMsg=document.getElementById('remaining-days');
+const subjectVideos=document.getElementById('subject-videos');
+const subjectTitle=document.getElementById('subject-title');
+const videosContainer=document.getElementById('videos-container');
+const searchInput=document.getElementById('search-input');
+const selectedVideo=document.getElementById('selected-video');
+const closeVideoBtn=document.getElementById('close-video');
+
+// ===== AUTH FUNCTIONS =====
+function showLogin(){ signupDiv.classList.add('hidden'); loginDiv.classList.remove('hidden'); }
+function showSignUp(){ loginDiv.classList.add('hidden'); signupDiv.classList.remove('hidden'); }
+
+function signUp(){
+  const name=document.getElementById('signup-name').value.trim();
+  if(!name){ alert("Enter your name"); return; }
+  const signupDate=Date.now();
+  localStorage.setItem('user',JSON.stringify({name,signupDate}));
+  currentUser={name,signupDate};
+  showDashboard();
+}
+
+function login(){
+  const userData=JSON.parse(localStorage.getItem('user'));
+  if(!userData){ alert("No user found! Sign up first."); return; }
+  currentUser=userData;
+  showDashboard();
+}
+
+function showDashboard(){
+  const signupDate=new Date(currentUser.signupDate);
+  const today=new Date();
+  const diffDays=Math.floor((today-signupDate)/(1000*60*60*24));
+  const remainingDays=Math.max(0,30-diffDays);
+  welcomeName.textContent=`Welcome, ${currentUser.name}!`;
+  remainingDaysMsg.textContent=`You have ${remainingDays} day(s) remaining of access.`;
+  authContainer.classList.add('hidden');
+  dashboard.classList.remove('hidden');
+}
+
+// ===== NAVIGATION =====
+function back(){
+  if(currentTerm){ currentTerm=null; showTerms(currentGrade); loadedCount=0;} 
+  else if(currentGrade){ currentGrade=null; showGrades(currentSubject); loadedCount=0;} 
+  else { subjectVideos.classList.add('hidden'); dashboard.classList.remove('hidden'); }
+}
+
+function showGrades(subject){
+  currentSubject=subject; currentGrade=currentTerm=null; videosContainer.innerHTML="";
+  Object.keys(videosData[subject]).forEach(grade=>{
+    const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=grade.toUpperCase();
+    btn.onclick=()=>{ showTerms(grade); loadedCount=0; };
+    videosContainer.appendChild(btn);
+  });
+  subjectVideos.classList.remove('hidden');
+  subjectTitle.textContent=subject.toUpperCase();
+}
+
+function showTerms(grade){
+  currentGrade=grade; currentTerm=null; videosContainer.innerHTML="";
+  Object.keys(videosData[currentSubject][grade]).forEach(term=>{
+    const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=term.toUpperCase();
+    btn.onclick=()=>{ showVideos(term); loadedCount=0; };
+    videosContainer.appendChild(btn);
+  });
+}
+
+function showVideos(term){
+  currentTerm=term;
+  currentVideos=videosData[currentSubject][currentGrade][term];
+  videosContainer.innerHTML=""; loadedCount=0;
+  renderNextBatch();
+}
+
+// ===== LAZY LOADING =====
+function renderNextBatch(){
+  const nextBatch=currentVideos.slice(loadedCount, loadedCount+batchSize);
+  nextBatch.forEach(v=>{
+    const card=document.createElement('div'); card.className='video-card';
+    const img=document.createElement('img'); img.src=v.thumb || "https://img.icons8.com/color/96/000000/video.png";
+    const title=document.createElement('p'); title.textContent=v.title;
+    card.appendChild(img); card.appendChild(title);
+    card.addEventListener('click', ()=>{
+      selectedVideo.src=v.url; selectedVideo.classList.remove('hidden'); closeVideoBtn.classList.remove('hidden');
+      selectedVideo.scrollIntoView({behavior:'smooth', block:'start'}); selectedVideo.play();
+    });
+    videosContainer.appendChild(card);
+  });
+  loadedCount+=nextBatch.length;
+}
+
+videosContainer.addEventListener('scroll', ()=>{
+  if(videosContainer.scrollTop + videosContainer.clientHeight >= videosContainer.scrollHeight - 5){
+    if(loadedCount<currentVideos.length){ renderNextBatch(); }
+  }
+});
+
+function closeVideo(){ selectedVideo.pause(); selectedVideo.src=""; selectedVideo.classList.add('hidden'); closeVideoBtn.classList.add('hidden'); }
+
+searchInput.addEventListener('input', ()=>{
+  const query=searchInput.value.toLowerCase();
+  const filtered=currentVideos.filter(v=>v.title.toLowerCase().includes(query));
+  videosContainer.innerHTML=""; loadedCount=0;
+  currentVideos=filtered;
+  renderNextBatch();
+});
+
+function logout(){ localStorage.removeItem('user'); location.reload(); }
+</script>
+</body>
+</html>
