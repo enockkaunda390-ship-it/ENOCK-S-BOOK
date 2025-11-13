@@ -27,14 +27,7 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
 .video-controls { text-align:right; }
 .video-controls button { background:#0078ff; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer; margin-top:5px; }
 .video-controls button:hover { background:#005fd1; }
-
-/* Responsive container for small screens */
-@media (max-width: 500px) {
-  .container {
-    margin: 10px;
-    width: calc(100% - 20px);
-  }
-}
+@media (max-width: 500px) { .container { margin:10px; width:calc(100% - 20px); } }
 </style>
 </head>
 <body>
@@ -46,7 +39,12 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
     <input type="text" id="signup-name" placeholder="Full Name"><br>
     <input type="email" id="signup-email" placeholder="Email"><br>
     <input type="password" id="signup-password" placeholder="Password"><br>
-    <button onclick="signUp()">Sign Up</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+      <button onclick="signUp()" style="flex:1; margin-right:10px;">Sign Up</button>
+      <a href="https://wa.me/260768037965" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:36px; height:36px;">
+      </a>
+    </div>
     <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
     <p id="error" style="color:red;"></p>
   </div>
@@ -55,7 +53,12 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
     <h2>Login</h2>
     <input type="email" id="login-email" placeholder="Email"><br>
     <input type="password" id="login-password" placeholder="Password"><br>
-    <button onclick="login()">Login</button>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+      <button onclick="login()" style="flex:1; margin-right:10px;">Login</button>
+      <a href="https://wa.me/260768037965" target="_blank">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:36px; height:36px;">
+      </a>
+    </div>
     <p>Don't have an account? <a href="#" onclick="showSignUp()">Sign Up</a></p>
     <p id="error-login" style="color:red;"></p>
   </div>
@@ -63,115 +66,41 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
 
 <!-- Dashboard -->
 <div class="container hidden" id="dashboard">
-  <h1>Enock Academy</h1>
-  <h2 id="welcome-name"></h2>
-  <p id="remaining-days"></p>
-  <div id="subjects">
-    <a class="nav-btn" onclick="showGrades('math')">Math</a>
-    <a class="nav-btn" onclick="showGrades('chemistry')">Chemistry</a>
-    <a class="nav-btn" onclick="showGrades('biology')">Biology</a>
-    <a class="nav-btn" onclick="showGrades('physics')">Physics</a>
-    <button style="width:100%; margin-top:10px;" onclick="logout()">Logout</button>
+<h1>Enock Academy</h1>
+<h2 id="welcome-name"></h2>
+<p id="remaining-days"></p>
+<div id="subjects">
+  <a class="nav-btn" onclick="showGrades('math')">Math</a>
+  <a class="nav-btn" onclick="showGrades('chemistry')">Chemistry</a>
+  <a class="nav-btn" onclick="showGrades('biology')">Biology</a>
+  <a class="nav-btn" onclick="showGrades('physics')">Physics</a>
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
+    <button onclick="logout()" style="padding:8px 12px; font-size:14px;">Logout</button>
+    <a href="https://wa.me/260768037965" target="_blank">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:36px; height:36px;">
+    </a>
   </div>
+</div>
 </div>
 
 <!-- Subject Videos -->
 <div class="container hidden" id="subject-videos">
-  <h2 id="subject-title"></h2>
-  <div id="top-bar">
-    <a class="back" onclick="back()">Back</a>
-    <input type="text" id="search-input" class="search-bar" placeholder="Search videos...">
-  </div>
-  <div id="videos-container"></div>
+<h2 id="subject-title"></h2>
+<div id="top-bar">
+  <a class="back" onclick="back()">Back</a>
+  <input type="text" id="search-input" class="search-bar" placeholder="Search videos...">
+</div>
+<div id="videos-container"></div>
 </div>
 
-<!-- Firebase Authentication -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAazQb4Oz3iLOLEb7MBHuAI9BaFENdASkw",
-  authDomain: "secondary-center.firebaseapp.com",
-  projectId: "secondary-center",
-  storageBucket: "secondary-center.firebasestorage.app",
-  messagingSenderId: "1019887514683",
-  appId: "1:1019887514683:web:6e6af64676f653c28e181e",
-  measurementId: "G-PLXF010P8Z"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-
-window.showLogin = function() {
-  document.getElementById('signup-div').classList.add('hidden');
-  document.getElementById('login-div').classList.remove('hidden');
-}
-
-window.showSignUp = function() {
-  document.getElementById('login-div').classList.add('hidden');
-  document.getElementById('signup-div').classList.remove('hidden');
-}
-
-window.signUp = function () {
-  const name = document.getElementById('signup-name').value.trim();
-  const email = document.getElementById('signup-email').value.trim();
-  const password = document.getElementById('signup-password').value.trim();
-  const errorDisplay = document.getElementById('error');
-
-  if (!name || !email || !password) {
-    errorDisplay.textContent = "Please fill in all fields.";
-    return;
-  }
-
-  createUserWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      localStorage.setItem('user', JSON.stringify({ name, email, uid: user.uid, signupDate: Date.now() }));
-      showDashboard();
-    })
-    .catch((error) => {
-      errorDisplay.textContent = error.message;
-    });
-};
-
-window.login = function () {
-  const email = document.getElementById('login-email').value.trim();
-  const password = document.getElementById('login-password').value.trim();
-  const errorLogin = document.getElementById('error-login');
-
-  signInWithEmailAndPassword(auth, email, password)
-    .then((userCredential) => {
-      const user = userCredential.user;
-      localStorage.setItem('user', JSON.stringify({ email, uid: user.uid }));
-      showDashboard();
-    })
-    .catch((error) => {
-      errorLogin.textContent = error.message;
-    });
-};
-
-window.logout = function () {
-  signOut(auth).then(() => {
-    localStorage.removeItem('user');
-    location.reload();
-  });
-};
-</script>
-
-<!-- Video App Logic -->
 <script>
-const videosData = {
-  math: { grade10: { term1: [
-    { title:"2024_Speed Time Graph (Exam)", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg" },
-    { title:"2023_Speed Time Graph (Exam)", src:"https://drive.google.com/file/d/1-SWap4eo9LYoB_OozEtHjStFqnL8FK6L/preview", thumb:"thumbnails/addition.jpg" }
-  ], term2:[], term3:[] }, grade11:{term1:[],term2:[],term3:[]}, grade12:{term1:[],term2:[],term3:[]} },
-  chemistry:{grade10:{term1:[],term2:[],term3:[]},grade11:{term1:[],term2:[],term3:[]},grade12:{term1:[],term2:[],term3:[]}},
-  biology:{grade10:{term1:[],term2:[],term3:[]},grade11:{term1:[],term2:[],term3:[]},grade12:{term1:[],term2:[],term3:[]}},
-  physics:{grade10:{term1:[],term2:[],term3:[]},grade11:{term1:[],term2:[],term3:[]},grade12:{term1:[],term2:[],term3:[]}}
-};
+// ===== DISABLED USERS =====
+const disabledUsers = ["blocked@example.com","testdisabled@email.com"]; 
 
-let currentUser=null,currentSubject=null,currentGrade=null,currentTerm=null,currentVideos=[],loadedCount=0,batchSize=10;
+// ===== GLOBALS =====
+let currentUser=null, currentSubject=null, currentGrade=null, currentTerm=null, currentVideos=[], currentVideosOriginal=[], loadedCount=0, batchSize=10;
+const signupDiv=document.getElementById('signup-div');
+const loginDiv=document.getElementById('login-div');
 const authContainer=document.getElementById('auth-container');
 const dashboard=document.getElementById('dashboard');
 const welcomeName=document.getElementById('welcome-name');
@@ -181,92 +110,138 @@ const subjectTitle=document.getElementById('subject-title');
 const videosContainer=document.getElementById('videos-container');
 const searchInput=document.getElementById('search-input');
 
+// ===== VIDEO DATA =====
+const videosData = {
+  math: { grade10:{ term1:[ {title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"},
+ {title:"Coming Soon...", src:"", thumb:"thumbnails/subtraction.jpg"},
+ {title:"Coming Soon...", src:"", thumb:"thumbnails/subtraction.jpg"},
+ {title:"Coming Soon...", src:"", thumb:"thumbnails/subtraction.jpg"}    
+      ], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
+  chemistry:{ grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
+  biology:{ grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
+  physics:{ grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } }
+};
+
+// ===== AUTH FUNCTIONS =====
+window.addEventListener('DOMContentLoaded', ()=>{
+  const userData = JSON.parse(localStorage.getItem('user'));
+  if(userData){ 
+    currentUser=userData; 
+    if(disabledUsers.includes(userData.email)) { 
+      alert("Please make payment or contact Admin (0768037965)"); 
+      logout(); 
+    } else { showDashboard(); } 
+  }
+});
+
+function showLogin(){ signupDiv.classList.add('hidden'); loginDiv.classList.remove('hidden'); }
+function showSignUp(){ loginDiv.classList.add('hidden'); signupDiv.classList.remove('hidden'); }
+
+function signUp(){
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  if(!name || !email){ alert("Enter your name and email"); return; }
+  if(disabledUsers.includes(email)) { alert("Please make payment or contact Admin (0768037965)"); return; }
+  const signupDate=Date.now();
+  localStorage.setItem('user',JSON.stringify({name,email,signupDate}));
+  currentUser={name,email,signupDate};
+  showDashboard();
+}
+
+function login(){
+  const email=document.getElementById('login-email').value.trim();
+  const userData=JSON.parse(localStorage.getItem('user'));
+  if(!userData){ alert("No user found! Sign up first."); return; }
+  if(disabledUsers.includes(email)) { alert("Please make payment or contact Admin (0768037965)"); return; }
+  currentUser=userData;
+  showDashboard();
+}
+
 function showDashboard(){
-  const storedUser=JSON.parse(localStorage.getItem('user'));
-  if(!storedUser) return;
-  currentUser=storedUser;
-  const signupDate=new Date(currentUser.signupDate||Date.now());
+  const signupDate=new Date(currentUser.signupDate);
   const today=new Date();
   const diffDays=Math.floor((today-signupDate)/(1000*60*60*24));
   const remainingDays=Math.max(0,30-diffDays);
-  welcomeName.textContent=`Welcome, ${currentUser.name||currentUser.email}!`;
+  welcomeName.textContent=`Welcome, ${currentUser.name}!`;
   remainingDaysMsg.textContent=`You have ${remainingDays} day(s) remaining of access.`;
   authContainer.classList.add('hidden');
   dashboard.classList.remove('hidden');
+  if(remainingDays<=5 && remainingDays>0) alert(`Hurry! Only ${remainingDays} day(s) left in your trial. Please contact Admin.`);
+  if(remainingDays===0) { alert("Your trial has ended. Please make payment or contact Admin."); logout(); }
 }
 
+function logout(){ localStorage.removeItem('user'); location.reload(); }
+
+// ===== NAVIGATION / VIDEO FUNCTIONS =====
+let currentSubject2=null, currentGrade2=null, currentTerm2=null;
+
 function back(){
-  if(currentTerm){currentTerm=null;showTerms(currentGrade);loadedCount=0;}
-  else if(currentGrade){currentGrade=null;showGrades(currentSubject);loadedCount=0;}
-  else{subjectVideos.classList.add('hidden');dashboard.classList.remove('hidden');}
+  if(currentTerm2){ currentTerm2=null; showTerms(currentGrade2); loadedCount=0;} 
+  else if(currentGrade2){ currentGrade2=null; showGrades(currentSubject2); loadedCount=0;} 
+  else { subjectVideos.classList.add('hidden'); dashboard.classList.remove('hidden'); }
 }
 
 function showGrades(subject){
-  currentSubject=subject;currentGrade=currentTerm=null;videosContainer.innerHTML="";
+  currentSubject2=subject; currentGrade2=currentTerm2=null; videosContainer.innerHTML="";
   Object.keys(videosData[subject]).forEach(grade=>{
-    const btn=document.createElement('div');btn.className='nav-btn';btn.textContent=grade.toUpperCase();
-    btn.onclick=()=>{showTerms(grade);loadedCount=0;};
+    const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=grade.toUpperCase();
+    btn.onclick=()=>{ showTerms(grade); loadedCount=0; };
     videosContainer.appendChild(btn);
   });
+  dashboard.classList.add('hidden');
   subjectVideos.classList.remove('hidden');
   subjectTitle.textContent=subject.toUpperCase();
 }
 
 function showTerms(grade){
-  currentGrade=grade;currentTerm=null;videosContainer.innerHTML="";
-  Object.keys(videosData[currentSubject][grade]).forEach(term=>{
-    const btn=document.createElement('div');btn.className='nav-btn';btn.textContent=term.toUpperCase();
-    btn.onclick=()=>{showVideos(term);loadedCount=0;};
+  currentGrade2=grade; currentTerm2=null; videosContainer.innerHTML="";
+  Object.keys(videosData[currentSubject2][grade]).forEach(term=>{
+    const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=term.toUpperCase();
+    btn.onclick=()=>{ showVideos(term); loadedCount=0; };
     videosContainer.appendChild(btn);
   });
 }
 
 function showVideos(term){
-  currentTerm=term;
-  currentVideos=videosData[currentSubject][currentGrade][term];
-  videosContainer.innerHTML="";loadedCount=0;
+  currentTerm2=term;
+  currentVideosOriginal = videosData[currentSubject2][currentGrade2][term]; // Keep original
+  currentVideos = [...currentVideosOriginal];
+  loadedCount = 0;
+  videosContainer.innerHTML = "";
   renderNextBatch();
 }
 
 function renderNextBatch(){
-  const nextBatch=currentVideos.slice(loadedCount,loadedCount+batchSize);
+  const nextBatch=currentVideos.slice(loadedCount, loadedCount+batchSize);
   nextBatch.forEach(v=>{
-    const card=document.createElement('div');card.className='video-card';
-    const title=document.createElement('h3');title.textContent=v.title;
-    const img=document.createElement('img');img.src=v.thumb;img.style.cursor="pointer";
-    const iframe=document.createElement('iframe');iframe.src=v.src;iframe.allow="autoplay; encrypted-media";iframe.allowFullscreen=true;iframe.style.display="none";
-    img.addEventListener('click',()=>{img.style.display="none";iframe.style.display="block";});
-    const controls=document.createElement('div');controls.className='video-controls';
-    const btn=document.createElement('button');btn.textContent="⬇️ Download";btn.onclick=()=>downloadVideoFromDrive(v.src);
+    const card=document.createElement('div'); card.className='video-card';
+    const title=document.createElement('h3'); title.textContent=v.title;
+    const img=document.createElement('img'); img.src=v.thumb;
+    const iframe=document.createElement('iframe'); iframe.src=v.src; iframe.allow="autoplay; encrypted-media"; iframe.allowFullscreen=true; iframe.style.display="none";
+    img.addEventListener('click', ()=>{ img.style.display="none"; iframe.style.display="block"; });
+    const controls=document.createElement('div'); controls.className='video-controls';
+    const btn=document.createElement('button'); btn.textContent="⬇️ Download"; btn.onclick=()=>{ const fileId = v.src.match(/\/d\/(.*?)\//)[1]; const link = document.createElement('a'); link.href = `https://drive.google.com/uc?export=download&id=${fileId}`; link.download=''; link.click(); };
     controls.appendChild(btn);
-    card.append(title,img,iframe,controls);
+    card.appendChild(title); card.appendChild(img); card.appendChild(iframe); card.appendChild(controls);
     videosContainer.appendChild(card);
   });
   loadedCount+=nextBatch.length;
 }
 
-videosContainer.addEventListener('scroll',()=>{
-  if(videosContainer.scrollTop+videosContainer.clientHeight>=videosContainer.scrollHeight-5){
-    if(loadedCount<currentVideos.length){renderNextBatch();}
+videosContainer.addEventListener('scroll', ()=>{
+  if(videosContainer.scrollTop + videosContainer.clientHeight >= videosContainer.scrollHeight - 5){
+    if(loadedCount<currentVideos.length){ renderNextBatch(); }
   }
 });
 
-searchInput.addEventListener('input',()=>{
-  if(!currentVideos) return;
-  const query=searchInput.value.toLowerCase();
-  const filtered=currentVideos.filter(v=>v.title.toLowerCase().includes(query));
-  videosContainer.innerHTML="";loadedCount=0;
-  currentVideos=filtered;
+searchInput.addEventListener('input', ()=>{
+  const query = searchInput.value.toLowerCase();
+  const filtered = currentVideosOriginal.filter(v => v.title.toLowerCase().includes(query));
+  currentVideos = [...filtered];
+  loadedCount = 0;
+  videosContainer.innerHTML = "";
   renderNextBatch();
 });
-
-function downloadVideoFromDrive(src){
-  const fileId=src.match(/\/d\/(.*?)\//)[1];
-  const link=document.createElement('a');
-  link.href=`https://drive.google.com/uc?export=download&id=${fileId}`;
-  link.download='';
-  link.click();
-}
 </script>
 </body>
 </html>
