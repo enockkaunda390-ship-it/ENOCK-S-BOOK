@@ -3,13 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Learn With Enock - Video Template</title>
+<title>Learn With Enock - Protected Video Page</title>
 <style>
 body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; padding:0; background:#f5f7fa; }
 .container { max-width:500px; margin:20px auto; background:white; padding:20px; border-radius:12px; box-shadow:0 5px 15px rgba(0,0,0,0.1); }
 input[type="text"], input[type="email"], input[type="password"] { width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; }
 button { padding:12px 20px; border:none; background:#1976d2; color:white; border-radius:8px; cursor:pointer; margin:5px 0; font-weight:bold; transition:0.3s; }
 button:hover { background:#0288d1; transform:scale(1.03); }
+button[type="button"]{ /* ensure non-submit */ }
 .hidden { display:none; }
 .nav-btn { display:inline-block; margin:10px 5px; padding:15px 20px; background:#1976d2; color:white; border-radius:10px; cursor:pointer; text-decoration:none; width:calc(50% - 20px); box-sizing:border-box; font-weight:bold; text-align:center; transition:0.3s; }
 .nav-btn:hover { background:#0288d1; transform:scale(1.03); }
@@ -32,29 +33,32 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
 </head>
 <body>
 
-<!-- Sign Up / Login -->
+<!-- AUTH FORMS -->
 <div class="container" id="auth-container">
+
+  <!-- SIGN UP -->
   <div id="signup-div">
     <h2>Sign Up</h2>
     <input type="text" id="signup-name" placeholder="Full Name"><br>
     <input type="email" id="signup-email" placeholder="Email"><br>
     <input type="password" id="signup-password" placeholder="Password"><br>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-      <button onclick="signUp()" style="flex:1; margin-right:10px;">Sign Up</button>
+      <button type="button" onclick="signUp()">Sign Up</button>
       <a href="https://wa.me/260768037965" target="_blank">
         <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:36px; height:36px;">
       </a>
     </div>
     <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
-    <p id="error" style="color:red;"></p>
+    <p id="error-signup" style="color:red;"></p>
   </div>
 
+  <!-- LOGIN -->
   <div id="login-div" class="hidden">
     <h2>Login</h2>
     <input type="email" id="login-email" placeholder="Email"><br>
     <input type="password" id="login-password" placeholder="Password"><br>
     <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-      <button onclick="login()" style="flex:1; margin-right:10px;">Login</button>
+      <button type="button" onclick="login()">Login</button>
       <a href="https://wa.me/260768037965" target="_blank">
         <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:36px; height:36px;">
       </a>
@@ -62,9 +66,10 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
     <p>Don't have an account? <a href="#" onclick="showSignUp()">Sign Up</a></p>
     <p id="error-login" style="color:red;"></p>
   </div>
+
 </div>
 
-<!-- Dashboard -->
+<!-- DASHBOARD -->
 <div class="container hidden" id="dashboard">
 <h1>Enock Academy</h1>
 <h2 id="welcome-name"></h2>
@@ -75,7 +80,7 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
   <a class="nav-btn" onclick="showGrades('biology')">Biology</a>
   <a class="nav-btn" onclick="showGrades('physics')">Physics</a>
   <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
-    <button onclick="logout()" style="padding:8px 12px; font-size:14px;">Logout</button>
+    <button type="button" onclick="logout()">Logout</button>
     <a href="https://wa.me/260768037965" target="_blank">
       <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" style="width:36px; height:36px;">
     </a>
@@ -83,7 +88,7 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
 </div>
 </div>
 
-<!-- Subject Videos -->
+<!-- SUBJECT VIDEOS -->
 <div class="container hidden" id="subject-videos">
 <h2 id="subject-title"></h2>
 <div id="top-bar">
@@ -94,168 +99,114 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
 </div>
 
 <script>
-// ===== DISABLED USERS =====
+// ===== CONFIG =====
 const disabledUsers = ["blocked@example.com","testdisabled@email.com"];
+let users = JSON.parse(localStorage.getItem('users')||"[]");
+let currentUser=null, currentVideos=[], loadedCount=0, batchSize=10, filteredVideos=[];
 
-// ===== GLOBALS =====
-let currentUser = null, currentSubject2=null, currentGrade2=null, currentTerm2=null, currentVideos=[], loadedCount=0, batchSize=10, filteredVideos=[];
-const signupDiv=document.getElementById('signup-div');
-const loginDiv=document.getElementById('login-div');
-const authContainer=document.getElementById('auth-container');
-const dashboard=document.getElementById('dashboard');
-const welcomeName=document.getElementById('welcome-name');
-const remainingDaysMsg=document.getElementById('remaining-days');
-const subjectVideos=document.getElementById('subject-videos');
-const subjectTitle=document.getElementById('subject-title');
-const videosContainer=document.getElementById('videos-container');
-const searchInput=document.getElementById('search-input');
+// ===== ELEMENTS =====
+const authContainer = document.getElementById('auth-container');
+const signupDiv = document.getElementById('signup-div');
+const loginDiv = document.getElementById('login-div');
+const dashboard = document.getElementById('dashboard');
+const welcomeName = document.getElementById('welcome-name');
+const remainingDaysMsg = document.getElementById('remaining-days');
+const subjectVideos = document.getElementById('subject-videos');
+const subjectTitle = document.getElementById('subject-title');
+const videosContainer = document.getElementById('videos-container');
+const searchInput = document.getElementById('search-input');
 
 // ===== VIDEO DATA =====
 const videosData = {
-  math: { grade10:{ term1:[ {title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"},
-     {title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
+  math: { grade10:{ term1:[ {title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"} ], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
   chemistry:{ grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
   biology:{ grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } },
   physics:{ grade10:{ term1:[], term2:[], term3:[] }, grade11:{ term1:[], term2:[], term3:[] }, grade12:{ term1:[], term2:[], term3:[] } }
 };
 
-// ===== HELPER =====
+// ===== UTILS =====
 function isDisabled(email){ return disabledUsers.includes(email); }
+function findUser(email){ return users.find(u=>u.email===email); }
+function saveUsers(){ localStorage.setItem('users', JSON.stringify(users)); }
 
-// ===== INITIAL CHECK =====
-window.addEventListener('DOMContentLoaded', ()=>{
-    const userData = JSON.parse(localStorage.getItem('user'));
-    if(userData){
-        if(isDisabled(userData.email)){
-            alert("Your account is disabled. Please make payment or contact Admin (0768037965)");
-            logout();
-        } else {
-            currentUser = userData;
-            showDashboard();
-        }
-    }
-});
-
-// ===== SHOW LOGIN / SIGNUP =====
-function showLogin(){ signupDiv.classList.add('hidden'); loginDiv.classList.remove('hidden'); }
-function showSignUp(){ loginDiv.classList.add('hidden'); signupDiv.classList.remove('hidden'); }
+// ===== SHOW FORMS =====
+function showLogin(){ signupDiv.classList.add('hidden'); loginDiv.classList.remove('hidden'); authContainer.classList.remove('hidden'); }
+function showSignUp(){ loginDiv.classList.add('hidden'); signupDiv.classList.remove('hidden'); authContainer.classList.remove('hidden'); }
 
 // ===== SIGN UP =====
 function signUp(){
-    const name=document.getElementById('signup-name').value.trim();
-    const email=document.getElementById('signup-email').value.trim();
-    if(!name || !email){ alert("Enter your name and email"); return; }
-    if(isDisabled(email)){ alert("Your account is disabled. Please contact Admin (0768037965)"); return; }
-    const signupDate=Date.now();
-    currentUser={name,email,signupDate};
-    localStorage.setItem('user',JSON.stringify(currentUser));
-    showDashboard();
+  const name=document.getElementById('signup-name').value.trim();
+  const email=document.getElementById('signup-email').value.trim();
+  const password=document.getElementById('signup-password').value.trim();
+  if(!name||!email||!password){ alert("All fields required"); return; }
+  if(isDisabled(email)){ alert("Please make payment or contact the Admin 0768037965."); return; }
+  if(findUser(email)){ alert("User already exists. Please login."); showLogin(); return; }
+
+  const newUser={name,email,password,signupDate:Date.now()};
+  users.push(newUser); saveUsers();
+  currentUser=newUser;
+  sessionStorage.setItem('user', JSON.stringify(currentUser));
+  showDashboard();
 }
 
 // ===== LOGIN =====
 function login(){
-    const emailInput=document.getElementById('login-email').value.trim();
-    const userData=JSON.parse(localStorage.getItem('user'));
-    if(!userData){ alert("No user found! Sign up first."); return; }
-    if(isDisabled(userData.email)){ alert("Your account is disabled. Please contact Admin (0768037965)"); logout(); return; }
-    if(emailInput!==userData.email){ alert("Email does not match our records."); return; }
-    currentUser=userData;
-    showDashboard();
+  const email=document.getElementById('login-email').value.trim();
+  const password=document.getElementById('login-password').value.trim();
+  if(!email||!password){ alert("Both fields required"); return; }
+  if(isDisabled(email)){ alert("Please make payment or contact the Admin 0768037965."); return; }
+
+  const user=findUser(email);
+  if(!user||user.password!==password){ alert("Invalid email or password"); return; }
+
+  currentUser=user;
+  sessionStorage.setItem('user', JSON.stringify(currentUser));
+  showDashboard();
 }
 
 // ===== DASHBOARD =====
+window.addEventListener('DOMContentLoaded', ()=>{
+  const userData=JSON.parse(sessionStorage.getItem('user'));
+  if(userData){
+    if(isDisabled(userData.email)){ alert("Please make payment or contact the Admin 0768037965."); logout(); return; }
+    currentUser=userData;
+    showDashboard();
+  } else { showSignUp(); }
+});
+
 function showDashboard(){
-    const signupDate=new Date(currentUser.signupDate);
-    const today=new Date();
-    const diffDays=Math.floor((today-signupDate)/(1000*60*60*24));
-    const remainingDays=Math.max(0,30-diffDays);
-    if(remainingDays===0){ alert("Your trial has ended. Please contact Admin."); logout(); return; }
-    welcomeName.textContent=`Welcome, ${currentUser.name}!`;
-    remainingDaysMsg.textContent=`You have ${remainingDays} day(s) remaining of access.`;
-    authContainer.classList.add('hidden');
-    dashboard.classList.remove('hidden');
-    if(remainingDays<=5){ alert(`Hurry! Only ${remainingDays} day(s) left in your trial.`); }
+  const signupDate=new Date(currentUser.signupDate);
+  const today=new Date();
+  const diffDays=Math.floor((today-signupDate)/(1000*60*60*24));
+  const remainingDays=Math.max(0,30-diffDays);
+  if(remainingDays===0){ alert("Your trial ended. Please contact Admin 0768037965."); logout(); return; }
+
+  welcomeName.textContent=`Welcome, ${currentUser.name}!`;
+  remainingDaysMsg.textContent=`You have ${remainingDays} day(s) left of access.`;
+  authContainer.classList.add('hidden'); dashboard.classList.remove('hidden');
+  if(remainingDays<=5){ alert(`Hurry! Only ${remainingDays} day(s) left.`); }
 }
 
 // ===== LOGOUT =====
-function logout(){ localStorage.removeItem('user'); location.reload(); }
-
-// ===== NAVIGATION =====
-function back(){
-    searchInput.value="";
-    if(currentTerm2){ currentTerm2=null; showTerms(currentGrade2);} 
-    else if(currentGrade2){ currentGrade2=null; showGrades(currentSubject2);} 
-    else { subjectVideos.classList.add('hidden'); dashboard.classList.remove('hidden'); }
-}
-
-function showGrades(subject){
-    resetVideos();
-    currentSubject2=subject; currentGrade2=currentTerm2=null;
-    videosContainer.innerHTML="";
-    Object.keys(videosData[subject]).forEach(grade=>{
-        const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=grade.toUpperCase();
-        btn.onclick=()=>{ showTerms(grade); };
-        videosContainer.appendChild(btn);
-    });
+function logout(){
+    currentUser=null;
+    sessionStorage.removeItem('user');
     dashboard.classList.add('hidden');
-    subjectVideos.classList.remove('hidden');
-    subjectTitle.textContent=subject.toUpperCase();
+    subjectVideos.classList.add('hidden');
+    showSignUp();
 }
 
-function showTerms(grade){
-    resetVideos();
-    currentGrade2=grade; currentTerm2=null;
-    videosContainer.innerHTML="";
-    Object.keys(videosData[currentSubject2][grade]).forEach(term=>{
-        const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=term.toUpperCase();
-        btn.onclick=()=>{ showVideos(term); };
-        videosContainer.appendChild(btn);
-    });
-}
-
-function showVideos(term){
-    resetVideos();
-    currentTerm2=term;
-    currentVideos=videosData[currentSubject2][currentGrade2][term];
-    renderNextBatch();
-}
-
-// ===== VIDEO RENDERING =====
+// ===== NAVIGATION & VIDEO LOGIC =====
+let currentSubject2=null, currentGrade2=null, currentTerm2=null;
+function back(){ searchInput.value=""; if(currentTerm2){ currentTerm2=null; showTerms(currentGrade2);} else if(currentGrade2){ currentGrade2=null; showGrades(currentSubject2);} else { subjectVideos.classList.add('hidden'); dashboard.classList.remove('hidden'); } }
+function showGrades(subject){ resetVideos(); currentSubject2=subject; currentGrade2=currentTerm2=null; videosContainer.innerHTML=""; Object.keys(videosData[subject]).forEach(grade=>{ const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=grade.toUpperCase(); btn.onclick=()=>{ showTerms(grade); }; videosContainer.appendChild(btn); }); dashboard.classList.add('hidden'); subjectVideos.classList.remove('hidden'); subjectTitle.textContent=subject.toUpperCase(); }
+function showTerms(grade){ resetVideos(); currentGrade2=grade; currentTerm2=null; videosContainer.innerHTML=""; Object.keys(videosData[currentSubject2][grade]).forEach(term=>{ const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=term.toUpperCase(); btn.onclick=()=>{ showVideos(term); }; videosContainer.appendChild(btn); }); }
+function showVideos(term){ resetVideos(); currentTerm2=term; currentVideos=videosData[currentSubject2][currentGrade2][term]; renderNextBatch(); }
 function resetVideos(){ videosContainer.innerHTML=""; currentVideos=[]; filteredVideos=[]; loadedCount=0; }
-
-function renderNextBatch(list=currentVideos){
-    const nextBatch=list.slice(loadedCount, loadedCount+batchSize);
-    nextBatch.forEach(v=>{
-        const card=document.createElement('div'); card.className='video-card';
-        const title=document.createElement('h3'); title.textContent=v.title;
-        const img=document.createElement('img'); img.src=v.thumb;
-        const iframe=document.createElement('iframe'); iframe.src=v.src; iframe.allow="autoplay; encrypted-media"; iframe.allowFullscreen=true; iframe.style.display="none";
-        img.addEventListener('click', ()=>{ img.style.display="none"; iframe.style.display="block"; });
-        const controls=document.createElement('div'); controls.className='video-controls';
-        const btn=document.createElement('button'); btn.textContent="⬇️ Download"; 
-        btn.onclick=()=>{ const fileId=v.src.match(/\/d\/(.*?)\//)[1]; const link=document.createElement('a'); link.href=`https://drive.google.com/uc?export=download&id=${fileId}`; link.download=''; link.click(); };
-        controls.appendChild(btn);
-        card.appendChild(title); card.appendChild(img); card.appendChild(iframe); card.appendChild(controls);
-        videosContainer.appendChild(card);
-    });
-    loadedCount+=nextBatch.length;
-}
-
-// ===== SCROLL & SEARCH =====
-videosContainer.onscroll=()=>{
-    const list=filteredVideos.length ? filteredVideos : currentVideos;
-    if(videosContainer.scrollTop + videosContainer.clientHeight >= videosContainer.scrollHeight - 5){
-        if(loadedCount < list.length) renderNextBatch(list);
-    }
-};
-
-searchInput.oninput=()=>{
-    const query=searchInput.value.toLowerCase();
-    videosContainer.innerHTML="";
-    loadedCount=0;
-    if(!query){ filteredVideos=[]; renderNextBatch(currentVideos); }
-    else { filteredVideos=currentVideos.filter(v=>v.title.toLowerCase().includes(query)); renderNextBatch(filteredVideos); }
-};
+function renderNextBatch(list=currentVideos){ const nextBatch=list.slice(loadedCount,loadedCount+batchSize); nextBatch.forEach(v=>{ const card=document.createElement('div'); card.className='video-card'; const title=document.createElement('h3'); title.textContent=v.title; const img=document.createElement('img'); img.src=v.thumb; const iframe=document.createElement('iframe'); iframe.src=v.src; iframe.allow="autoplay; encrypted-media"; iframe.allowFullscreen=true; iframe.style.display="none"; img.addEventListener('click',()=>{ img.style.display="none"; iframe.style.display="block"; }); const controls=document.createElement('div'); controls.className='video-controls'; const btn=document.createElement('button'); btn.textContent="⬇️ Download"; btn.onclick=()=>{ const fileId=v.src.match(/\/d\/(.*?)\//)[1]; const link=document.createElement('a'); link.href=`https://drive.google.com/uc?export=download&id=${fileId}`; link.download=''; link.click(); }; controls.appendChild(btn); card.appendChild(title); card.appendChild(img); card.appendChild(iframe); card.appendChild(controls); videosContainer.appendChild(card); }); loadedCount+=nextBatch.length; }
+videosContainer.onscroll=()=>{ const list=filteredVideos.length?filteredVideos:currentVideos; if(videosContainer.scrollTop+videosContainer.clientHeight>=videosContainer.scrollHeight-5){ if(loadedCount<list.length) renderNextBatch(list); } };
+searchInput.oninput=()=>{ const query=searchInput.value.toLowerCase(); videosContainer.innerHTML=""; loadedCount=0; if(!query){ filteredVideos=[]; renderNextBatch(currentVideos); } else { filteredVideos=currentVideos.filter(v=>v.title.toLowerCase().includes(query)); renderNextBatch(filteredVideos); } };
 </script>
+
 </body>
 </html>
