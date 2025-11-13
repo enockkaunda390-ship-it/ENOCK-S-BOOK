@@ -10,7 +10,7 @@ body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin:0; p
 input[type="text"], input[type="email"], input[type="password"] { width:100%; padding:12px; margin:10px 0; border-radius:8px; border:1px solid #ccc; box-sizing:border-box; }
 button { padding:12px 20px; border:none; background:#1976d2; color:white; border-radius:8px; cursor:pointer; margin:5px 0; font-weight:bold; transition:0.3s; }
 button:hover { background:#0288d1; transform:scale(1.03); }
-button[type="button"]{ /* ensure non-submit */ }
+button[type="button"]{ }
 .hidden { display:none; }
 .nav-btn { display:inline-block; margin:10px 5px; padding:15px 20px; background:#1976d2; color:white; border-radius:10px; cursor:pointer; text-decoration:none; width:calc(50% - 20px); box-sizing:border-box; font-weight:bold; text-align:center; transition:0.3s; }
 .nav-btn:hover { background:#0288d1; transform:scale(1.03); }
@@ -139,7 +139,7 @@ function signUp(){
   const email=document.getElementById('signup-email').value.trim();
   const password=document.getElementById('signup-password').value.trim();
   if(!name||!email||!password){ alert("All fields required"); return; }
-  if(isDisabled(email)){ alert("Please make payment or contact the Admin 0768037965."); return; }
+  if(isDisabled(email)){ alert("Please make payment or contact Admin (0768037965)."); return; }
   if(findUser(email)){ alert("User already exists. Please login."); showLogin(); return; }
 
   const newUser={name,email,password,signupDate:Date.now()};
@@ -154,7 +154,7 @@ function login(){
   const email=document.getElementById('login-email').value.trim();
   const password=document.getElementById('login-password').value.trim();
   if(!email||!password){ alert("Both fields required"); return; }
-  if(isDisabled(email)){ alert("Please make payment or contact the Admin 0768037965."); return; }
+  if(isDisabled(email)){ alert("Please make payment or contact Admin (0768037965)."); return; }
 
   const user=findUser(email);
   if(!user||user.password!==password){ alert("Invalid email or password"); return; }
@@ -164,16 +164,22 @@ function login(){
   showDashboard();
 }
 
-// ===== DASHBOARD =====
+// ===== DASHBOARD PROTECTION =====
 window.addEventListener('DOMContentLoaded', ()=>{
   const userData=JSON.parse(sessionStorage.getItem('user'));
   if(userData){
-    if(isDisabled(userData.email)){ alert("Please make payment or contact the Admin 0768037965."); logout(); return; }
+    if(isDisabled(userData.email)){ 
+      alert("Please make payment or contact Admin (0768037965)"); 
+      sessionStorage.removeItem('user'); 
+      showLogin(); 
+      return; 
+    }
     currentUser=userData;
     showDashboard();
-  } else { showSignUp(); }
+  } else { showLogin(); }
 });
 
+// ===== DASHBOARD =====
 function showDashboard(){
   const signupDate=new Date(currentUser.signupDate);
   const today=new Date();
@@ -193,7 +199,7 @@ function logout(){
     sessionStorage.removeItem('user');
     dashboard.classList.add('hidden');
     subjectVideos.classList.add('hidden');
-    showSignUp();
+    showLogin();
 }
 
 // ===== NAVIGATION & VIDEO LOGIC =====
