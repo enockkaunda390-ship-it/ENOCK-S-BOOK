@@ -28,9 +28,34 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
 .video-controls button { background:#0078ff; color:#fff; border:none; border-radius:6px; padding:6px 10px; cursor:pointer; margin-top:5px; }
 .video-controls button:hover { background:#005fd1; }
 @media (max-width: 500px) { .container { margin:10px; width:calc(100% - 20px); } }
+
+/* WhatsApp Floating Button */
+#whatsapp-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 60px;
+  height: 60px;
+  z-index: 100;
+  cursor: pointer;
+  display: none;
+}
+#whatsapp-btn img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+  transition: transform 0.3s;
+}
+#whatsapp-btn img:hover { transform: scale(1.1); }
 </style>
 </head>
 <body>
+
+<!-- WhatsApp Button -->
+<a href="https://wa.me/260768037965" target="_blank" id="whatsapp-btn">
+  <img src="https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg" alt="WhatsApp" />
+</a>
 
 <!-- Sign Up / Login -->
 <div class="container" id="auth-container">
@@ -42,7 +67,6 @@ iframe { width:100%; border-radius:10px; margin-top:5px; height:250px; border:no
     <button id="signup-btn" type="button">Sign Up</button>
     <p>Already have an account? <a href="#" id="show-login">Login</a></p>
   </div>
-
   <div id="login-div" class="hidden">
     <h2>Login</h2>
     <input type="email" id="login-email" placeholder="Email">
@@ -90,7 +114,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// ===== Elements =====
+// Elements
 const signupDiv = document.getElementById('signup-div');
 const loginDiv = document.getElementById('login-div');
 const authContainer = document.getElementById('auth-container');
@@ -104,168 +128,89 @@ const videosContainer = document.getElementById('videos-container');
 const searchInput = document.getElementById('search-input');
 const backBtn = document.getElementById('back-btn');
 
-let currentSubject2 = null, currentGrade2 = null, currentTerm2 = null;
-let currentVideos = [], loadedCount = 0, batchSize = 10, filteredVideos = [];
+let currentSubject=null, currentGrade=null, currentTerm=null;
+let currentVideos=[], loadedCount=0, batchSize=10, filteredVideos=[];
 
-// ===== Video Data =====
+// Video Data (placeholders)
 const videosData = {
-  math: { grade10:{ term1:[ {title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"},
-{title:"2023_Speed Time Graph", src:"https://drive.google.com/file/d/1-SWap4eo9LYoB_OozEtHjStFqnL8FK6L/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] }, grade11:{ term1:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] }, grade12:{ term1:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[] } },
-  chemistry:{ grade10:{ term1:[], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] }, grade11:{ term1:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] }, grade12:{ term1:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] } },
-  biology:{ grade10:{ term1:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] }, grade11:{ term1:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] }, grade12:{ term1:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"2024_Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}] } },
-  physics:{ grade10:{ term1:[{title:"Physical quantities ", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"},
-{title:"Kinematics", src:"h", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"Dynamics", src:"h", thumb:"thumbnails/subtraction.jpg"},
-{title:"Mass, Weight & Density", src:"h", thumb:"thumbnails/subtraction.jpg"},
-{title:"Turning Effect of Force", src:"http", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"Pressure", src:"h", thumb:"thumbnails/subtraction.jpg"},
-{title:"Work, Energy & Power ", src:"htt", thumb:"thumbnails/subtraction.jpg"}] }, grade11:{ term1:[{title:"Kinetic Model Of Matter", src:"https", thumb:"thumbnails/subtraction.jpg"},
-{title:"Transfer Of Formal Energy", src:"", thumb:"thumbnails/subtraction.jpg"},
-{title:"Temperature", src:"http", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"Thermal Properties", src:"htt", thumb:"thumbnails/subtraction.jpg"},
-{title:"Light", src:"htt", thumb:"thumbnails/subtraction.jpg"},], term3:[{title:"Electromagnetic Spectrum ", src:"h", thumb:"thumbnails/subtraction.jpg"},
-{title:"Sound", src:"htt", thumb:"thumbnails/subtraction.jpg"}] }, grade12:{ term1:[{title:"Static Electricity", src:"ht", thumb:"thumbnails/subtraction.jpg"},
-{title:"Current Of Electricity", src:"htt", thumb:"thumbnails/subtraction.jpg"}], term2:[{title:"D.C Circuit", src:"http", thumb:"thumbnails/subtraction.jpg"}], term3:[{title:"Plactical Electricity", src:"htt", thumb:"thumbnails/subtraction.jpg"},
-{title:"Electromagnetism", src:"htt", thumb:"thumbnails/subtraction.jpg"},
-{title:"Electromagnetic Induction", src:"htt", thumb:"thumbnails/subtraction.jpg"}] } }
+  math:{ grade10:{ term1:[{title:"Speed Time Graph", src:"https://drive.google.com/file/d/1neehFWNbJm4zkjjHDrR8KXyqN9_FE7KQ/preview", thumb:"thumbnails/subtraction.jpg"}], term2:[], term3:[] }, grade11:{term1:[],term2:[],term3:[]}, grade12:{term1:[],term2:[],term3:[]}},
+  physics:{ grade10:{term1:[],term2:[],term3:[]}, grade11:{term1:[],term2:[],term3:[]}, grade12:{term1:[],term2:[],term3:[]}},
+  chemistry:{ grade10:{term1:[],term2:[],term3:[]}, grade11:{term1:[],term2:[],term3:[]}, grade12:{term1:[],term2:[],term3:[]}},
+  biology:{ grade10:{term1:[],term2:[],term3:[]}, grade11:{term1:[],term2:[],term3:[]}, grade12:{term1:[],term2:[],term3:[]}}
 };
 
-// ===== Show login/signup =====
-document.getElementById('show-login').onclick = ()=>{ signupDiv.classList.add('hidden'); loginDiv.classList.remove('hidden'); }
-document.getElementById('show-signup').onclick = ()=>{ loginDiv.classList.add('hidden'); signupDiv.classList.remove('hidden'); }
+// ===== AUTH & NAVIGATION =====
+document.getElementById('show-login').onclick = ()=>{ signupDiv.classList.add('hidden'); loginDiv.classList.remove('hidden'); updateWhatsappVisibility(); }
+document.getElementById('show-signup').onclick = ()=>{ loginDiv.classList.add('hidden'); signupDiv.classList.remove('hidden'); updateWhatsappVisibility(); }
 
-// ===== Sign Up =====
 document.getElementById('signup-btn').onclick = async ()=>{
   const name = document.getElementById('signup-name').value.trim();
   const email = document.getElementById('signup-email').value.trim();
   const password = document.getElementById('signup-password').value.trim();
-  if(!name || !email || !password){ alert("Fill all fields"); return; }
-
+  if(!name||!email||!password){alert("Fill all fields");return;}
   try{
     const methods = await fetchSignInMethodsForEmail(auth,email);
-    if(methods.length > 0){ alert("Email exists! Login instead."); return; }
-
+    if(methods.length>0){alert("Email exists! Login instead.");return;}
     await createUserWithEmailAndPassword(auth,email,password);
     await setDoc(doc(db,"users",email),{name,email,signupDate:Date.now(),disabled:false});
     alert("Signup successful!");
-  }catch(e){ alert("Error: "+e.message); }
+  }catch(e){alert("Error: "+e.message);}
 }
 
-// ===== Login =====
 document.getElementById('login-btn').onclick = async ()=>{
   const email = document.getElementById('login-email').value.trim();
   const password = document.getElementById('login-password').value.trim();
-  try{ await signInWithEmailAndPassword(auth,email,password); } 
-  catch(e){ alert(e.message); }
+  try{ await signInWithEmailAndPassword(auth,email,password);} 
+  catch(e){alert(e.message);}
 }
 
-// ===== Logout =====
 document.getElementById('logout-btn').onclick = ()=> signOut(auth).then(()=>location.reload());
 
-// ===== Auth State =====
 onAuthStateChanged(auth, async user=>{
   if(user){
     const userDoc = await getDoc(doc(db,"users",user.email));
-    if(!userDoc.exists()){
-      alert("No account record found. Contact admin.");
-      await signOut(auth); return;
-    }
+    if(!userDoc.exists()){alert("No account record found. Contact admin."); await signOut(auth); return;}
     const data = userDoc.data();
-    if(data.disabled){ alert("Account disabled. Contact admin."); await signOut(auth); return; }
-
+    if(data.disabled){alert("Account disabled. Contact admin."); await signOut(auth); return;}
     authContainer.classList.add('hidden');
     dashboard.classList.remove('hidden');
     welcomeName.textContent = `Welcome, ${data.name}!`;
     const diffDays = Math.floor((new Date()-new Date(data.signupDate))/(1000*60*60*24));
     remainingDaysMsg.textContent = `Trial: ${Math.max(0,30-diffDays)} day(s) left`;
-
     renderSubjects();
+    updateWhatsappVisibility();
   }
 });
 
-// ===== Real-time Users Logging =====
-onSnapshot(collection(db,"users"), snapshot=>{
-  snapshot.docChanges().forEach(change=>{
-    if(change.type==='added') console.log("New user:", change.doc.data());
-  });
-});
-
-// ===== Subjects =====
+// Subjects Navigation
 function renderSubjects(){
   subjectsDiv.innerHTML="";
   Object.keys(videosData).forEach(sub=>{
-    const btn = document.createElement('div'); btn.className='nav-btn'; btn.textContent=sub.toUpperCase();
-    btn.onclick=()=>showGrades(sub);
-    subjectsDiv.appendChild(btn);
+    const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=sub.toUpperCase();
+    btn.onclick=()=>showGrades(sub); subjectsDiv.appendChild(btn);
   });
 }
-
-// ===== Navigation =====
 backBtn.onclick = ()=>{
   searchInput.value="";
-  if(currentTerm2){ currentTerm2=null; showTerms(currentGrade2);}
-  else if(currentGrade2){ currentGrade2=null; showGrades(currentSubject2);}
-  else{ subjectVideos.classList.add('hidden'); dashboard.classList.remove('hidden'); }
+  if(currentTerm){currentTerm=null; showTerms(currentGrade);}
+  else if(currentGrade){currentGrade=null; showGrades(currentSubject);}
+  else{subjectVideos.classList.add('hidden'); dashboard.classList.remove('hidden'); updateWhatsappVisibility();}
 }
+function showGrades(subject){currentSubject=subject; currentGrade=currentTerm=null; renderOptions(Object.keys(videosData[subject]), showTerms, subjectTitle, subject.toUpperCase());}
+function showTerms(grade){currentGrade=grade; currentTerm=null; renderOptions(Object.keys(videosData[currentSubject][grade]), showVideos, subjectTitle, `${currentSubject.toUpperCase()} - ${grade.toUpperCase()}`);}
+function showVideos(term){currentTerm=term; currentVideos=videosData[currentSubject][currentGrade][term]; videosContainer.innerHTML=""; loadedCount=0; filteredVideos=[]; renderNextBatch();}
+function renderOptions(list, clickFn, titleEl, titleText){videosContainer.innerHTML=""; titleEl.textContent=titleText; dashboard.classList.add('hidden'); subjectVideos.classList.remove('hidden'); list.forEach(item=>{const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=item.toUpperCase(); btn.onclick=()=>clickFn(item); videosContainer.appendChild(btn);});}
+function renderNextBatch(list=currentVideos){const nextBatch=list.slice(loadedCount,loadedCount+batchSize);nextBatch.forEach(v=>{const card=document.createElement('div'); card.className='video-card'; const title=document.createElement('h3'); title.textContent=v.title; const img=document.createElement('img'); img.src=v.thumb; const iframe=document.createElement('iframe'); iframe.src=v.src; iframe.allow="autoplay; encrypted-media"; iframe.allowFullscreen=true; iframe.style.display="none"; img.onclick=()=>{img.style.display="none"; iframe.style.display="block";}; const controls=document.createElement('div'); controls.className='video-controls'; const btn=document.createElement('button'); btn.textContent="⬇️ Download"; controls.appendChild(btn); card.append(title,img,iframe,controls); videosContainer.appendChild(card);}); loadedCount+=nextBatch.length;}
+videosContainer.onscroll = ()=>{const list=filteredVideos.length?filteredVideos:currentVideos;if(videosContainer.scrollTop+videosContainer.clientHeight>=videosContainer.scrollHeight-5){if(loadedCount<list.length) renderNextBatch(list);}};
+searchInput.oninput = ()=>{const query=searchInput.value.toLowerCase(); videosContainer.innerHTML=""; loadedCount=0; if(!query){filteredVideos=[]; renderNextBatch();} else{filteredVideos=currentVideos.filter(v=>v.title.toLowerCase().includes(query)); renderNextBatch(filteredVideos);}};
 
-// ===== Grades/Terms/Videos =====
-function showGrades(subject){
-  currentSubject2=subject; currentGrade2=currentTerm2=null;
-  renderOptions(Object.keys(videosData[subject]), showTerms, subjectTitle, subject.toUpperCase());
+// WhatsApp visibility
+function updateWhatsappVisibility(){
+  const btn = document.getElementById('whatsapp-btn');
+  if(!authContainer.classList.contains('hidden') || !dashboard.classList.contains('hidden')) btn.style.display='block';
+  else btn.style.display='none';
 }
-
-function showTerms(grade){
-  currentGrade2=grade; currentTerm2=null;
-  renderOptions(Object.keys(videosData[currentSubject2][grade]), showVideos, subjectTitle, `${currentSubject2.toUpperCase()} - ${grade.toUpperCase()}`);
-}
-
-function showVideos(term){
-  currentTerm2=term;
-  currentVideos=videosData[currentSubject2][currentGrade2][term];
-  videosContainer.innerHTML=""; loadedCount=0; filteredVideos=[];
-  renderNextBatch();
-}
-
-function renderOptions(list, clickFn, titleEl, titleText){
-  videosContainer.innerHTML="";
-  titleEl.textContent = titleText;
-  dashboard.classList.add('hidden'); subjectVideos.classList.remove('hidden');
-  list.forEach(item=>{
-    const btn=document.createElement('div'); btn.className='nav-btn'; btn.textContent=item.toUpperCase(); btn.onclick=()=>clickFn(item);
-    videosContainer.appendChild(btn);
-  });
-}
-
-// ===== Video Render =====
-function renderNextBatch(list=currentVideos){
-  const nextBatch = list.slice(loadedCount, loadedCount+batchSize);
-  nextBatch.forEach(v=>{
-    const card = document.createElement('div'); card.className='video-card';
-    const title = document.createElement('h3'); title.textContent=v.title;
-    const img = document.createElement('img'); img.src=v.thumb;
-    const iframe = document.createElement('iframe'); iframe.src=v.src; iframe.allow="autoplay; encrypted-media"; iframe.allowFullscreen=true; iframe.style.display="none";
-    img.onclick = ()=>{ img.style.display="none"; iframe.style.display="block"; };
-    const controls = document.createElement('div'); controls.className='video-controls';
-    const btn = document.createElement('button'); btn.textContent="⬇️ Download";
-    btn.onclick = ()=>{ const id = v.src.match(/\/d\/(.*?)\//)[1]; const link=document.createElement('a'); link.href=`https://drive.google.com/uc?export=download&id=${id}`; link.click(); };
-    controls.appendChild(btn);
-    card.append(title,img,iframe,controls); videosContainer.appendChild(card);
-  });
-  loadedCount += nextBatch.length;
-}
-
-// ===== Scroll loader =====
-videosContainer.onscroll = ()=>{
-  const list = filteredVideos.length?filteredVideos:currentVideos;
-  if(videosContainer.scrollTop + videosContainer.clientHeight >= videosContainer.scrollHeight-5){
-    if(loadedCount<list.length) renderNextBatch(list);
-  }
-}
-
-// ===== Search =====
-searchInput.oninput = ()=>{
-  const query = searchInput.value.toLowerCase();
-  videosContainer.innerHTML=""; loadedCount=0;
-  if(!query){ filteredVideos=[]; renderNextBatch(); }
-  else{ filteredVideos = currentVideos.filter(v=>v.title.toLowerCase().includes(query)); renderNextBatch(filteredVideos); }
-}
+updateWhatsappVisibility();
 </script>
 </body>
 </html>
